@@ -51,11 +51,16 @@ jobs:
           ALLOWED_USERS: ${{ matrix.test_case.allowed_users }}
         run: |
           echo "Testing: ${{ matrix.test_case.name }}"
+
+          # Set test environment variables
+          export GITHUB_ACTOR="${{ matrix.test_case.test_actor }}"
+          export ALLOWED_USERS="${{ matrix.test_case.allowed_users }}"
           echo "Actor: $GITHUB_ACTOR"
           echo "Allowed: $ALLOWED_USERS"
 
           # Run permission check
-          bash scripts/check-permission.sh
+          unset GITHUB_ENV  # Force script to use export instead of GITHUB_ENV
+          source scripts/check-permission.sh
 
           # Verify result
           if [[ "$USER_AUTHORIZED" != "${{ matrix.test_case.expected }}" ]]; then
