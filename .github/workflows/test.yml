@@ -1,0 +1,92 @@
+name: Test Claude Code Action Access Control
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      test_user:
+        description: 'Test user to simulate'
+        required: false
+        default: 'test-user'
+
+jobs:
+  test-permission-check:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        test_case:
+          - name: 'Allowed user'
+            allowed_users: |
+              test-user
+              another-user
+            test_actor: 'test-user'
+            expected: 'true'
+
+          - name: 'Not allowed user'
+            allowed_users: 'allowed-user'
+            test_actor: 'not-allowed'
+            expected: 'false'
+
+          - name: 'Exact match only'
+            allowed_users: |
+              exact-user
+              another-exact
+            test_actor: 'exact-user'
+            expected: 'true'
+
+          - name: 'Empty allowed list'
+            allowed_users: ''
+            test_actor: 'any-user'
+            expected: 'false'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Test - ${{ matrix.test_case.name }}
+        env:
+          GITHUB_ACTOR: ${{ matrix.test_case.test_actor }}
+          ALLOWED_USERS: ${{ matrix.test_case.allowed_users }}
+        run: |
+          echo "Testing: ${{ matrix.test_case.name }}"
+          echo "Actor: $GITHUB_ACTOR"
+          echo "Allowed: $ALLOWED_USERS"
+
+          # Run permission check
+          bash scripts/check-permission.sh
+
+          # Verify result
+          if [[ "$USER_AUTHORIZED" != "${{ matrix.test_case.expected }}" ]]; then
+            echo "❌ Test failed! Expected: ${{ matrix.test_case.expected }}, Got: $USER_AUTHORIZED"
+            exit 1
+          else
+            echo "✅ Test passed!"
+          fi
+
+  test-action-syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate action.yml
+        run: |
+          # Basic YAML validation
+          if ! command -v yq &> /dev/null; then
+            echo "Installing yq..."
+            sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+            sudo chmod +x /usr/local/bin/yq
+          fi
+
+          echo "Validating action.yml syntax..."
+          yq eval '.' action.yml > /dev/null
+          echo "✅ action.yml is valid!"
+
+      - name: Test action loading (dry run)
+        uses: ./
+        with:
+          allowed_users: 'test-user'
+          claude_code_oauth_token: 'dummy-token-for-test'
+          # This should fail at permission check, which is expected
+        continue-on-error: true

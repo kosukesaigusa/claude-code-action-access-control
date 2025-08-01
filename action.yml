@@ -1,0 +1,189 @@
+name: 'Claude Code Action Access Control'
+description: 'Access control wrapper for Claude Code Action - restrict usage to specific users, teams, or organization members'
+author: 'kosuke-saigusa'
+
+branding:
+  icon: 'shield'
+  color: 'blue'
+
+inputs:
+  # Access Control (specific to this action)
+  allowed_users:
+    description: 'Allowed GitHub usernames (newline-separated)'
+    required: false
+    default: ''
+  allowed_teams:
+    description: 'Allowed GitHub teams in "org/team" format (newline-separated)'
+    required: false
+    default: ''
+  allow_org_members:
+    description: 'Allow all organization members to use Claude'
+    required: false
+    default: 'false'
+
+  # See: https://github.com/anthropics/claude-code-action/blob/main/action.yml
+  trigger_phrase:
+    description: "The trigger phrase to look for in comments or issue body"
+    required: false
+    default: "@claude"
+  assignee_trigger:
+    description: "The assignee username that triggers the action (e.g. @claude)"
+    required: false
+  label_trigger:
+    description: "The label that triggers the action (e.g. claude)"
+    required: false
+    default: "claude"
+  base_branch:
+    description: "The branch to use as the base/source when creating new branches (defaults to repository default branch)"
+    required: false
+  branch_prefix:
+    description: "The prefix to use for Claude branches (defaults to 'claude/', use 'claude-' for dash format)"
+    required: false
+    default: "claude/"
+
+  # Mode configuration
+  mode:
+    description: "Execution mode for the action. Valid modes: 'tag' (default - triggered by mentions/assignments), 'agent' (for automation with no trigger checking)"
+    required: false
+    default: "tag"
+
+  # Claude Code configuration
+  model:
+    description: "Model to use (provider-specific format required for Bedrock/Vertex)"
+    required: false
+  anthropic_model:
+    description: "DEPRECATED: Use 'model' instead. Model to use (provider-specific format required for Bedrock/Vertex)"
+    required: false
+  fallback_model:
+    description: "Enable automatic fallback to specified model when primary model is unavailable"
+    required: false
+  allowed_tools:
+    description: "Additional tools for Claude to use (the base GitHub tools will always be included)"
+    required: false
+    default: ""
+  disallowed_tools:
+    description: "Tools that Claude should never use"
+    required: false
+    default: ""
+  custom_instructions:
+    description: "Additional custom instructions to include in the prompt for Claude"
+    required: false
+    default: ""
+  direct_prompt:
+    description: "Direct instruction for Claude (bypasses normal trigger detection)"
+    required: false
+    default: ""
+  override_prompt:
+    description: "Complete replacement of Claude's prompt with custom template (supports variable substitution)"
+    required: false
+    default: ""
+  mcp_config:
+    description: "Additional MCP configuration (JSON string) that merges with the built-in GitHub MCP servers"
+  additional_permissions:
+    description: "Additional permissions to enable. Currently supports 'actions: read' for viewing workflow results"
+    required: false
+    default: ""
+  claude_env:
+    description: "Custom environment variables to pass to Claude Code execution (YAML format)"
+    required: false
+    default: ""
+  settings:
+    description: "Claude Code settings as JSON string or path to settings JSON file"
+    required: false
+    default: ""
+
+  # Auth configuration
+  anthropic_api_key:
+    description: "Anthropic API key (required for direct API, not needed for Bedrock/Vertex)"
+    required: false
+  claude_code_oauth_token:
+    description: "Claude Code OAuth token (alternative to anthropic_api_key)"
+    required: false
+  github_token:
+    description: "GitHub token with repo and pull request permissions (optional if using GitHub App)"
+    required: false
+  use_bedrock:
+    description: "Use Amazon Bedrock with OIDC authentication instead of direct Anthropic API"
+    required: false
+    default: "false"
+  use_vertex:
+    description: "Use Google Vertex AI with OIDC authentication instead of direct Anthropic API"
+    required: false
+    default: "false"
+
+  max_turns:
+    description: "Maximum number of conversation turns"
+    required: false
+    default: ""
+  timeout_minutes:
+    description: "Timeout in minutes for execution"
+    required: false
+    default: "30"
+  use_sticky_comment:
+    description: "Use just one comment to deliver issue/PR comments"
+    required: false
+    default: "false"
+  use_commit_signing:
+    description: "Enable commit signing using GitHub's commit signature verification. When false, Claude uses standard git commands"
+    required: false
+    default: "false"
+  experimental_allowed_domains:
+    description: "Restrict network access to these domains only (newline-separated). If not set, no restrictions are applied. Provider domains are auto-detected."
+    required: false
+    default: ""
+
+runs:
+  using: "composite"
+  steps:
+    - name: Check User Permission
+      id: permission_check
+      shell: bash
+      run: |
+        # Export action path for script access
+        export ACTION_PATH="${{ github.action_path }}"
+        
+        # Run permission check script
+        bash "$ACTION_PATH/scripts/check-permission.sh"
+      env:
+        ALLOWED_USERS: ${{ inputs.allowed_users }}
+        ALLOWED_TEAMS: ${{ inputs.allowed_teams }}
+        ALLOW_ORG_MEMBERS: ${{ inputs.allow_org_members }}
+        GITHUB_TOKEN: ${{ inputs.github_token }}
+        GITHUB_ACTOR: ${{ github.actor }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
+    
+    - name: Run Claude Code Action
+      if: env.USER_AUTHORIZED == 'true'
+      uses: anthropics/claude-code-action@beta
+      with:
+        # Pass through authentication
+        claude_code_oauth_token: ${{ inputs.claude_code_oauth_token }}
+        anthropic_api_key: ${{ inputs.anthropic_api_key }}
+        github_token: ${{ inputs.github_token }}
+        
+        # Pass through all Claude parameters (same order as official action)
+        trigger_phrase: ${{ inputs.trigger_phrase }}
+        assignee_trigger: ${{ inputs.assignee_trigger }}
+        label_trigger: ${{ inputs.label_trigger }}
+        base_branch: ${{ inputs.base_branch }}
+        branch_prefix: ${{ inputs.branch_prefix }}
+        mode: ${{ inputs.mode }}
+        model: ${{ inputs.model }}
+        anthropic_model: ${{ inputs.anthropic_model }}
+        fallback_model: ${{ inputs.fallback_model }}
+        allowed_tools: ${{ inputs.allowed_tools }}
+        disallowed_tools: ${{ inputs.disallowed_tools }}
+        custom_instructions: ${{ inputs.custom_instructions }}
+        direct_prompt: ${{ inputs.direct_prompt }}
+        override_prompt: ${{ inputs.override_prompt }}
+        mcp_config: ${{ inputs.mcp_config }}
+        additional_permissions: ${{ inputs.additional_permissions }}
+        claude_env: ${{ inputs.claude_env }}
+        settings: ${{ inputs.settings }}
+        use_bedrock: ${{ inputs.use_bedrock }}
+        use_vertex: ${{ inputs.use_vertex }}
+        max_turns: ${{ inputs.max_turns }}
+        timeout_minutes: ${{ inputs.timeout_minutes }}
+        use_sticky_comment: ${{ inputs.use_sticky_comment }}
+        use_commit_signing: ${{ inputs.use_commit_signing }}
+        experimental_allowed_domains: ${{ inputs.experimental_allowed_domains }}
