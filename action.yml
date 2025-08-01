@@ -1,6 +1,6 @@
 name: 'Claude Code Action Access Control'
 description: 'Access control wrapper for Claude Code Action - restrict usage to specific users, teams, or organization members'
-author: 'kosuke-saigusa'
+author: 'kosukesaigusa'
 
 branding:
   icon: 'shield'

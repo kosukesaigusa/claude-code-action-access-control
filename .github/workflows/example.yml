@@ -30,7 +30,7 @@ jobs:
           fetch-depth: 1
 
       - name: Run Claude PR Action
-        uses: kosuke-saigusa/claude-code-action-access-control@v1
+        uses: kosukesaigusa/claude-code-action-access-control@v1
         with:
           # Access Control - specific to this action
           allowed_users: |

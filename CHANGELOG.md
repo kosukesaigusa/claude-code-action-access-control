@@ -25,5 +25,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Implemented exact-match only user validation
 - Added comprehensive permission checking logic
 
-[Unreleased]: https://github.com/kosuke-saigusa/claude-code-action-access-control/compare/v0.0.1...HEAD
-[0.0.1]: https://github.com/kosuke-saigusa/claude-code-action-access-control/releases/tag/v0.0.1
+[Unreleased]: https://github.com/kosukesaigusa/claude-code-action-access-control/compare/v0.0.1...HEAD
+[0.0.1]: https://github.com/kosukesaigusa/claude-code-action-access-control/releases/tag/v0.0.1

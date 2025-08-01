@@ -31,11 +31,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - uses: kosuke-saigusa/claude-code-action-access-control@v1
+      - uses: kosukesaigusa/claude-code-action-access-control@v1
         with:
           # Access Control
           allowed_users: |
-            kosuke-saigusa
+            kosukesaigusa
             teammate1
             trusted-contributor
           
@@ -71,7 +71,7 @@ All parameters from the official Claude Code Action are supported:
 ### Team-based Access
 
 ```yaml
-- uses: kosuke-saigusa/claude-code-action-access-control@v1
+- uses: kosukesaigusa/claude-code-action-access-control@v1
   with:
     # Allow specific teams
     allowed_teams: |
@@ -89,7 +89,7 @@ All parameters from the official Claude Code Action are supported:
 ### Custom Claude Configuration
 
 ```yaml
-- uses: kosuke-saigusa/claude-code-action-access-control@v1
+- uses: kosukesaigusa/claude-code-action-access-control@v1
   with:
     allowed_users: |
       trusted-user1
