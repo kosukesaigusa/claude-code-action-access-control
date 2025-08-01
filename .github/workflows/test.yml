@@ -55,6 +55,8 @@ jobs:
           echo "Allowed: $ALLOWED_USERS"
 
           # Run permission check
+          export GITHUB_ACTOR="${{ matrix.test_case.test_actor }}"
+          export ALLOWED_USERS="${{ matrix.test_case.allowed_users }}"
           bash scripts/check-permission.sh
 
           # Verify result
