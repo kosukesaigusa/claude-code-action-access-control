@@ -57,6 +57,7 @@ jobs:
           # Run permission check
           export GITHUB_ACTOR="${{ matrix.test_case.test_actor }}"
           export ALLOWED_USERS="${{ matrix.test_case.allowed_users }}"
+          unset GITHUB_ENV  # Force script to use export instead of GITHUB_ENV
           bash scripts/check-permission.sh
 
           # Verify result
