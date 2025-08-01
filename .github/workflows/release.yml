@@ -47,15 +47,3 @@ jobs:
               draft: false,
               prerelease: false
             });
-
-  test-release:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Test Action
-        uses: ./
-        with:
-          allowed_users: 'test-user'
-          claude_code_oauth_token: 'dummy-token'
-        continue-on-error: true
